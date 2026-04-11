@@ -5,6 +5,7 @@
 
 import AppKit
 import SwiftUI
+import ServiceManagement
 
 class AppDelegate: NSObject, NSApplicationDelegate {
 
@@ -15,26 +16,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let playerManager = PlayerManager()
 
     private var pollTimer: Timer?
-    private var marqueeTimer: Timer?
-
-    private var marqueeOffset: Int = 0
-    private let marqueeLabel = MenuBarLabel(visibleWidth: 30, padding: "   ")
 
     // MARK: - NSApplicationDelegate
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusItem()
         setupPopover()
+        playerManager.startObserving()
         startTimers()
+        registerLoginItem()
     }
 
     // MARK: - Status Item
 
     private func setupStatusItem() {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
 
         if let button = statusItem.button {
-            button.title = "♪"
+            button.image = NSImage(systemSymbolName: "music.note", accessibilityDescription: "MusicBar")
+            button.image?.isTemplate = true  // adapts to dark/light menu bar automatically
             button.action = #selector(togglePopover)
             button.target = self
         }
@@ -44,8 +44,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupPopover() {
         popover = NSPopover()
-        popover.contentSize = NSSize(width: 300, height: 360)
-        popover.behavior = .transient  // auto-dismisses on outside click
+        popover.contentSize = NSSize(width: 280, height: 340)
+        popover.behavior = .transient
         popover.animates = true
 
         let hostingController = NSHostingController(
@@ -65,45 +65,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    // MARK: - Timers
+    // MARK: - Login item
 
-    private func startTimers() {
-        // Data poll every 1.5s
-        pollTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
-            self?.playerManager.poll()
-        }
-        pollTimer?.fire()  // immediate first poll
-
-        // Marquee scroll every 0.3s
-        marqueeTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { [weak self] _ in
-            self?.updateMarquee()
+    private func registerLoginItem() {
+        do {
+            if SMAppService.mainApp.status == .notRegistered {
+                try SMAppService.mainApp.register()
+                print("[AppDelegate] Registered as login item")
+            }
+        } catch {
+            print("[AppDelegate] Could not register login item: \(error)")
         }
     }
 
-    // MARK: - Marquee
+    // MARK: - Timers
 
-    private func updateMarquee() {
-        guard let button = statusItem.button else { return }
-
-        let track = playerManager.trackName
-        let artist = playerManager.artistName
-
-        if track.isEmpty {
-            button.title = playerManager.isPlaying ? "♪" : "♩"
-            marqueeOffset = 0
-            return
-        }
-
-        let full = "\(track) — \(artist)"
-        let chars = Array(full + marqueeLabel.padding)
-
-        if chars.count <= marqueeLabel.visibleWidth {
-            // Short enough — show static, no scrolling
-            button.title = full
-            marqueeOffset = 0
-        } else {
-            button.title = marqueeLabel.slice(from: full, offset: marqueeOffset)
-            marqueeOffset += 1
+    private func startTimers() {
+        // Ticks position forward smoothly every 1s
+        pollTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.playerManager.poll()
         }
     }
 }

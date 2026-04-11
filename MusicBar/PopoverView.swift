@@ -8,7 +8,6 @@ import AppKit
 
 struct PopoverView: View {
     @ObservedObject var playerManager: PlayerManager
-
     private var state: PlayerState { playerManager.state }
 
     var body: some View {
@@ -18,7 +17,7 @@ struct PopoverView: View {
             progressView
             controlsView
         }
-        .padding()
+        .padding(16)
         .frame(width: 300)
     }
 
@@ -30,12 +29,12 @@ struct PopoverView: View {
             Image(nsImage: artwork)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 200, height: 200)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .frame(width: 190, height: 190)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
         } else {
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: 10)
                 .fill(Color.secondary.opacity(0.2))
-                .frame(width: 200, height: 200)
+                .frame(width: 190, height: 190)
                 .overlay {
                     Image(systemName: "music.note")
                         .font(.system(size: 48))
@@ -76,18 +75,14 @@ struct PopoverView: View {
 
     @ViewBuilder
     private var progressView: some View {
-        VStack(spacing: 2) {
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Color.secondary.opacity(0.3))
-                        .frame(height: 4)
-
-                    let progress = state.duration > 0 ? min(state.position / state.duration, 1.0) : 0
-                    Capsule()
-                        .fill(Color.primary)
-                        .frame(width: geo.size.width * progress, height: 4)
-                }
+        VStack(spacing: 4) {
+            let progress = state.duration > 0 ? min(state.position / state.duration, 1.0) : 0
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color.secondary.opacity(0.3))
+                Capsule()
+                    .fill(Color.primary)
+                    .scaleEffect(x: progress, anchor: .leading)
             }
             .frame(height: 4)
             .padding(.horizontal)
@@ -103,30 +98,26 @@ struct PopoverView: View {
         }
     }
 
-    // MARK: - Transport controls
+    // MARK: - Controls
 
     @ViewBuilder
     private var controlsView: some View {
-        HStack(spacing: 32) {
-            Button { playerManager.previousTrack() } label: {
-                Image(systemName: "backward.fill")
-                    .font(.title2)
+        HStack(spacing: 14) {
+            GlassButton(icon: "backward.fill", size: .medium) {
+                playerManager.previousTrack()
             }
-            .buttonStyle(.plain)
-
-            Button { playerManager.playPause() } label: {
-                Image(systemName: state.isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                    .font(.system(size: 44))
+            GlassButton(
+                icon: state.isPlaying ? "pause.fill" : "play.fill",
+                size: .large
+            ) {
+                playerManager.playPause()
             }
-            .buttonStyle(.plain)
-
-            Button { playerManager.nextTrack() } label: {
-                Image(systemName: "forward.fill")
-                    .font(.title2)
+            GlassButton(icon: "forward.fill", size: .medium) {
+                playerManager.nextTrack()
             }
-            .buttonStyle(.plain)
         }
-        .padding(.bottom, 4)
+        .padding(.top, 2)
+        .padding(.bottom, 6)
     }
 
     // MARK: - Helpers
@@ -134,8 +125,44 @@ struct PopoverView: View {
     private func formatTime(_ seconds: Double) -> String {
         guard seconds.isFinite, seconds >= 0 else { return "0:00" }
         let total = Int(seconds)
-        let m = total / 60
-        let s = total % 60
-        return String(format: "%d:%02d", m, s)
+        return String(format: "%d:%02d", total / 60, total % 60)
+    }
+}
+
+// MARK: - Glass Button
+
+struct GlassButton: View {
+    enum Size {
+        case medium, large
+
+        var frame: CGFloat        { self == .large ? 52 : 42 }
+        var iconSize: CGFloat     { self == .large ? 19 : 14 }
+        var cornerRadius: CGFloat { self == .large ? 16 : 12 }
+    }
+
+    let icon: String
+    let size: Size
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: size.iconSize, weight: .semibold))
+                .frame(width: size.frame, height: size.frame)
+                .background {
+                    RoundedRectangle(cornerRadius: size.cornerRadius)
+                        .fill(Color.primary.opacity(isHovered ? 0.12 : 0.07))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: size.cornerRadius)
+                                .stroke(Color.primary.opacity(0.15), lineWidth: 0.8)
+                        )
+                }
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .scaleEffect(isHovered ? 1.06 : 1.0)
+        .animation(.spring(duration: 0.15), value: isHovered)
     }
 }
