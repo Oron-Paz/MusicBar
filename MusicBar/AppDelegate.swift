@@ -6,6 +6,7 @@
 import AppKit
 import SwiftUI
 import ServiceManagement
+import Carbon.HIToolbox
 
 class AppDelegate: NSObject, NSApplicationDelegate {
 
@@ -25,6 +26,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         playerManager.startObserving()
         startTimers()
         registerLoginItem()
+        registerHotkeys()
     }
 
     // MARK: - Status Item
@@ -75,6 +77,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         } catch {
             print("[AppDelegate] Could not register login item: \(error)")
+        }
+    }
+
+    // MARK: - Hotkeys
+
+    private func registerHotkeys() {
+        // ⌥⇧M → open/close popover
+        HotkeyManager.shared.register(
+            keyCode: UInt32(kVK_ANSI_M),
+            modifiers: UInt32(cmdKey | shiftKey)
+        ) { [weak self] in
+            self?.togglePopover()
+        }
+
+        // ⌥⇧Space → play/pause
+        HotkeyManager.shared.register(
+            keyCode: UInt32(kVK_Space),
+            modifiers: UInt32(cmdKey | shiftKey)
+        ) { [weak self] in
+            self?.playerManager.playPause()
         }
     }
 
