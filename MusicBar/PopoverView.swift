@@ -112,16 +112,19 @@ struct PopoverView: View {
             .padding(.vertical, 8)
         } else {
             HStack(spacing: 14) {
-                GlassButton(icon: "backward.fill", size: .medium) {
+                GlassButton(icon: "backward.fill", size: .medium,
+                            isActivated: playerManager.highlightedControl == "previous") {
                     playerManager.previousTrack()
                 }
                 GlassButton(
                     icon: state.isPlaying ? "pause.fill" : "play.fill",
-                    size: .large
+                    size: .large,
+                    isActivated: playerManager.highlightedControl == "playPause"
                 ) {
                     playerManager.playPause()
                 }
-                GlassButton(icon: "forward.fill", size: .medium) {
+                GlassButton(icon: "forward.fill", size: .medium,
+                            isActivated: playerManager.highlightedControl == "next") {
                     playerManager.nextTrack()
                 }
             }
@@ -152,6 +155,7 @@ struct GlassButton: View {
 
     let icon: String
     let size: Size
+    var isActivated: Bool = false
     let action: () -> Void
 
     @State private var isHovered = false
@@ -163,16 +167,19 @@ struct GlassButton: View {
                 .frame(width: size.frame, height: size.frame)
                 .background {
                     RoundedRectangle(cornerRadius: size.cornerRadius)
-                        .fill(Color.primary.opacity(isHovered ? 0.12 : 0.07))
+                        .fill(Color.primary.opacity(isActivated ? 0.22 : (isHovered ? 0.12 : 0.07)))
                         .overlay(
                             RoundedRectangle(cornerRadius: size.cornerRadius)
-                                .stroke(Color.primary.opacity(0.15), lineWidth: 0.8)
+                                .stroke(Color.primary.opacity(isActivated ? 0.5 : 0.15), lineWidth: 0.8)
                         )
+                        .shadow(color: Color.white.opacity(isActivated ? 0.45 : 0),
+                                radius: isActivated ? 8 : 0)
                 }
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
         .scaleEffect(isHovered ? 1.06 : 1.0)
         .animation(.spring(duration: 0.15), value: isHovered)
+        .animation(.easeOut(duration: 0.15), value: isActivated)
     }
 }

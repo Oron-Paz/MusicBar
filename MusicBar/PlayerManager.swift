@@ -25,6 +25,7 @@ struct PlayerState {
 class PlayerManager: ObservableObject {
 
     @Published var state = PlayerState()
+    @Published var highlightedControl: String? = nil   // "playPause" | "next" | "previous"
 
     private var playbackStartedAt: Date?
     private var positionAtStart: Double = 0
@@ -207,9 +208,20 @@ class PlayerManager: ObservableObject {
         state.position = min(positionAtStart + Date().timeIntervalSince(startedAt), state.duration)
     }
 
+    // MARK: - Flash highlight
+
+    private func flash(_ control: String) {
+        highlightedControl = control
+        Task {
+            try? await Task.sleep(for: .milliseconds(150))
+            highlightedControl = nil
+        }
+    }
+
     // MARK: - Transport commands
 
     func playPause() {
+        flash("playPause")
         switch state.player {
         case .spotify:
             let playing = state.isPlaying
@@ -230,6 +242,7 @@ class PlayerManager: ObservableObject {
     }
 
     func nextTrack() {
+        flash("next")
         switch state.player {
         case .spotify:    Task { await SpotifyAPI.nextTrack() }
         case .appleMusic: appleMusicCommand("next track")
@@ -238,6 +251,7 @@ class PlayerManager: ObservableObject {
     }
 
     func previousTrack() {
+        flash("previous")
         switch state.player {
         case .spotify:    Task { await SpotifyAPI.previousTrack() }
         case .appleMusic: appleMusicCommand("previous track")
