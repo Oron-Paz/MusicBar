@@ -8,7 +8,7 @@ import SwiftUI
 import ServiceManagement
 import Carbon.HIToolbox
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     // MARK: - Properties
 
@@ -17,6 +17,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let playerManager = PlayerManager()
 
     private var pollTimer: Timer?
+    private var localKeyMonitor: Any?
 
     // MARK: - NSApplicationDelegate
 
@@ -49,6 +50,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentSize = NSSize(width: 280, height: 340)
         popover.behavior = .transient
         popover.animates = true
+        popover.delegate = self
 
         let hostingController = NSHostingController(
             rootView: PopoverView(playerManager: playerManager)
@@ -60,10 +62,43 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard let button = statusItem.button else { return }
 
         if popover.isShown {
+            removeLocalKeyMonitor()
             popover.performClose(nil)
         } else {
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             popover.contentViewController?.view.window?.makeKey()
+            installLocalKeyMonitor()
+        }
+    }
+
+    // MARK: - NSPopoverDelegate
+
+    func popoverDidClose(_ notification: Notification) {
+        removeLocalKeyMonitor()
+    }
+
+    // MARK: - Local key monitor (active only while popover is open)
+
+    private func installLocalKeyMonitor() {
+        guard localKeyMonitor == nil else { return }
+        localKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard event.modifierFlags.contains([.command, .shift]) else { return event }
+            if event.keyCode == UInt16(kVK_ANSI_RightBracket) {
+                self?.playerManager.nextTrack()
+                return nil  // consume event
+            }
+            if event.keyCode == UInt16(kVK_ANSI_LeftBracket) {
+                self?.playerManager.previousTrack()
+                return nil  // consume event
+            }
+            return event
+        }
+    }
+
+    private func removeLocalKeyMonitor() {
+        if let monitor = localKeyMonitor {
+            NSEvent.removeMonitor(monitor)
+            localKeyMonitor = nil
         }
     }
 
@@ -83,7 +118,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Hotkeys
 
     private func registerHotkeys() {
-        // ⌥⇧M → open/close popover
+        // ⌘⇧M → open/close popover
         HotkeyManager.shared.register(
             keyCode: UInt32(kVK_ANSI_M),
             modifiers: UInt32(cmdKey | shiftKey)
@@ -97,24 +132,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             modifiers: UInt32(cmdKey | shiftKey)
         ) { [weak self] in
             self?.playerManager.playPause()
-        }
-
-        // ⌘⇧] → next track (only when popover is open)
-        HotkeyManager.shared.register(
-            keyCode: UInt32(kVK_ANSI_RightBracket),
-            modifiers: UInt32(cmdKey | shiftKey)
-        ) { [weak self] in
-            guard self?.popover.isShown == true else { return }
-            self?.playerManager.nextTrack()
-        }
-
-        // ⌘⇧[ → previous track (only when popover is open)
-        HotkeyManager.shared.register(
-            keyCode: UInt32(kVK_ANSI_LeftBracket),
-            modifiers: UInt32(cmdKey | shiftKey)
-        ) { [weak self] in
-            guard self?.popover.isShown == true else { return }
-            self?.playerManager.previousTrack()
         }
     }
 
