@@ -9,6 +9,30 @@ A minimal macOS menu bar app that shows what's playing in Spotify or Apple Music
 
 ---
 
+## Features
+
+- **Now Playing popover** — album art, track name, artist, album, and a live progress bar
+- **Playback controls** — previous, play/pause, and next buttons in the popover
+- **Global hotkeys** — control playback from anywhere without opening the popover
+- **Auto-detects player** — switches seamlessly between Spotify and Apple Music
+- **Login item** — registers itself at first launch, always running when you log in
+- **No Dock icon** — stays out of your way, lives only in the menu bar
+
+---
+
+## Hotkeys
+
+| Hotkey | Action |
+|---|---|
+| `Cmd Shift M` | Open / close the popover |
+| `Cmd Shift Space` | Play / pause |
+| `Cmd Shift ]` | Next track *(popover must be open)* |
+| `Cmd Shift [` | Previous track *(popover must be open)* |
+
+> `Cmd Shift [` and `Cmd Shift ]` only intercept the keys while the popover is open, so they pass through normally to other apps (e.g. browser tab switching) when the popover is closed.
+
+---
+
 ## Requirements
 
 - macOS 15 or later
