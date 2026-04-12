@@ -91,12 +91,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self?.togglePopover()
         }
 
-        // ⌥⇧Space → play/pause
+        // ⌘⇧Space → play/pause
         HotkeyManager.shared.register(
             keyCode: UInt32(kVK_Space),
             modifiers: UInt32(cmdKey | shiftKey)
         ) { [weak self] in
             self?.playerManager.playPause()
+        }
+
+        // ⌘⇧] → next track (only when popover is open)
+        HotkeyManager.shared.register(
+            keyCode: UInt32(kVK_ANSI_RightBracket),
+            modifiers: UInt32(cmdKey | shiftKey)
+        ) { [weak self] in
+            guard self?.popover.isShown == true else { return }
+            self?.playerManager.nextTrack()
+        }
+
+        // ⌘⇧[ → previous track (only when popover is open)
+        HotkeyManager.shared.register(
+            keyCode: UInt32(kVK_ANSI_LeftBracket),
+            modifiers: UInt32(cmdKey | shiftKey)
+        ) { [weak self] in
+            guard self?.popover.isShown == true else { return }
+            self?.playerManager.previousTrack()
         }
     }
 
