@@ -8,6 +8,7 @@ import AppKit
 
 struct PopoverView: View {
     @ObservedObject var playerManager: PlayerManager
+    @ObservedObject private var spotifyAuth = SpotifyAuth.shared
     private var state: PlayerState { playerManager.state }
 
     var body: some View {
@@ -102,22 +103,31 @@ struct PopoverView: View {
 
     @ViewBuilder
     private var controlsView: some View {
-        HStack(spacing: 14) {
-            GlassButton(icon: "backward.fill", size: .medium) {
-                playerManager.previousTrack()
+        if state.player == .spotify && !spotifyAuth.isAuthorized {
+            Button("Connect Spotify") {
+                SpotifyAuth.shared.startAuth()
             }
-            GlassButton(
-                icon: state.isPlaying ? "pause.fill" : "play.fill",
-                size: .large
-            ) {
-                playerManager.playPause()
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
+            .padding(.vertical, 8)
+        } else {
+            HStack(spacing: 14) {
+                GlassButton(icon: "backward.fill", size: .medium) {
+                    playerManager.previousTrack()
+                }
+                GlassButton(
+                    icon: state.isPlaying ? "pause.fill" : "play.fill",
+                    size: .large
+                ) {
+                    playerManager.playPause()
+                }
+                GlassButton(icon: "forward.fill", size: .medium) {
+                    playerManager.nextTrack()
+                }
             }
-            GlassButton(icon: "forward.fill", size: .medium) {
-                playerManager.nextTrack()
-            }
+            .padding(.top, 2)
+            .padding(.bottom, 6)
         }
-        .padding(.top, 2)
-        .padding(.bottom, 6)
     }
 
     // MARK: - Helpers

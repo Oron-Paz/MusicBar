@@ -37,7 +37,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
         if let button = statusItem.button {
             button.image = NSImage(systemSymbolName: "music.note", accessibilityDescription: "MusicBar")
-            button.image?.isTemplate = true  // adapts to dark/light menu bar automatically
+            button.image?.isTemplate = true
             button.action = #selector(togglePopover)
             button.target = self
         }
@@ -85,11 +85,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             guard event.modifierFlags.contains([.command, .shift]) else { return event }
             if event.keyCode == UInt16(kVK_ANSI_RightBracket) {
                 self?.playerManager.nextTrack()
-                return nil  // consume event
+                return nil
             }
             if event.keyCode == UInt16(kVK_ANSI_LeftBracket) {
                 self?.playerManager.previousTrack()
-                return nil  // consume event
+                return nil
             }
             return event
         }
@@ -108,7 +108,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         do {
             if SMAppService.mainApp.status == .notRegistered {
                 try SMAppService.mainApp.register()
-                print("[AppDelegate] Registered as login item")
             }
         } catch {
             print("[AppDelegate] Could not register login item: \(error)")
@@ -138,7 +137,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     // MARK: - Timers
 
     private func startTimers() {
-        // Ticks position forward smoothly every 1s
         pollTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.playerManager.poll()
         }

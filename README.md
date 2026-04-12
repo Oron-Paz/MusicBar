@@ -39,6 +39,33 @@ A minimal macOS menu bar app that shows what's playing in Spotify or Apple Music
 - Xcode 16 or later
 - A free Apple Developer account (for code signing)
 - Spotify and/or Apple Music
+- A Spotify Developer app *(for Spotify playback controls — one-time setup, see below)*
+
+---
+
+## Spotify Setup
+
+MusicBar controls Spotify via the **Spotify Web API**, which requires a one-time OAuth connection.
+
+### 1. Create a Spotify Developer app
+
+1. Go to [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard) and log in
+2. Click **Create app**
+3. Fill in any name and description
+4. Under **Redirect URIs**, add exactly: `musicbar://spotify-callback`
+5. Save — copy the **Client ID**
+
+### 2. Add your Client ID
+
+Open `MusicBar/SpotifyAuth.swift` and replace the `clientID` value:
+
+```swift
+private let clientID = "YOUR_CLIENT_ID_HERE"
+```
+
+### 3. Connect from the app
+
+Build and run MusicBar. Play a track in Spotify — the popover will show a **"Connect Spotify"** button. Click it to complete the OAuth flow in your browser. After authorizing, playback controls will work. Tokens are stored in your Keychain and refresh automatically.
 
 ---
 
@@ -86,14 +113,17 @@ To remove the login item later:
 
 ## How it works
 
-- Uses **Distributed Notifications** (`DistributedNotificationCenter`) to receive track changes from Spotify and Apple Music in real time — no polling, no AppleScript needed for reading state
-- Album artwork is fetched from the **iTunes Search API** (no account or API key required)
-- Playback controls simulate **media keys** so they work with any player
+- Uses **Distributed Notifications** (`DistributedNotificationCenter`) to receive track changes from Spotify and Apple Music in real time — no polling for state
+- **Spotify transport** (play/pause, skip, previous) goes through the **Spotify Web API** — targeted directly at Spotify, doesn't interfere with other apps
+- **Apple Music transport** uses **AppleScript** — targeted directly at the Music app
+- Album artwork for Spotify is fetched from the **iTunes Search API** (no account required); Apple Music artwork is fetched via AppleScript from the app itself
 
 ---
 
 ## Notes
 
 - No App Store — build and run it yourself
-- No telemetry, no network calls except fetching album art from iTunes
-- If album art doesn't load, it means the track wasn't found in the iTunes catalog (rare)
+- No telemetry
+- Network calls: Spotify Web API for transport, iTunes Search API for Spotify album art
+- Spotify controls require a one-time OAuth connection (see [Spotify Setup](#spotify-setup) above)
+- If album art doesn't load for Spotify, the track wasn't found in the iTunes catalog (rare)
