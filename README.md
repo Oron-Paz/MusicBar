@@ -1,10 +1,9 @@
 # MusicBar
 
-A minimal macOS menu bar app that shows what's playing in Spotify or Apple Music.
+A minimal macOS menu bar app that shows what's playing in Spotify.
 
 - Lives in the menu bar — no Dock icon
 - Click the icon to see album art, track info, and playback controls
-- Supports Spotify and Apple Music (auto-detects whichever is playing)
 - Launches automatically at login
 
 ---
