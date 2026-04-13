@@ -25,6 +25,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         setupStatusItem()
         setupPopover()
         playerManager.startObserving()
+        playerManager.refreshFromSpotify()
         startTimers()
         registerLoginItem()
         registerHotkeys()
@@ -65,6 +66,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             removeLocalKeyMonitor()
             popover.performClose(nil)
         } else {
+            playerManager.refreshFromSpotify()
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             popover.contentViewController?.view.window?.makeKey()
             installLocalKeyMonitor()

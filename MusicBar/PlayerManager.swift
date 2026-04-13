@@ -199,6 +199,35 @@ class PlayerManager: ObservableObject {
         }
     }
 
+    // MARK: - Spotify state refresh (call on launch / popover open)
+
+    func refreshFromSpotify() {
+        guard SpotifyAuth.shared.isAuthorized else { return }
+        Task {
+            guard let playback = await SpotifyAPI.fetchCurrentPlayback() else { return }
+            let trackChanged = playback.trackName != state.trackName
+            state = PlayerState(
+                trackName: playback.trackName,
+                artistName: playback.artistName,
+                albumName: playback.albumName,
+                isPlaying: playback.isPlaying,
+                position: playback.positionMs / 1000.0,
+                duration: playback.durationMs / 1000.0,
+                artwork: trackChanged ? nil : state.artwork,
+                player: .spotify
+            )
+            if playback.isPlaying {
+                playbackStartedAt = Date()
+                positionAtStart = playback.positionMs / 1000.0
+            } else {
+                playbackStartedAt = nil
+            }
+            if trackChanged || state.artwork == nil {
+                fetchSpotifyArtwork(track: playback.trackName, artist: playback.artistName)
+            }
+        }
+    }
+
     // MARK: - Position tick
 
     func poll() { tickPosition() }
